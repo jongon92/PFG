@@ -1,0 +1,1659 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    11:11:09 03/25/2015 
+-- Design Name: 
+-- Module Name:    test_pisos - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.numeric_std.all;
+use IEEE.std_logic_unsigned.all;
+
+			
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity test_pisos is
+Port(
+--LEDs
+--LD0: out std_logic;
+ledF0Door: out std_logic;
+ledF1DoorDw: out std_logic;
+ledF1DoorUp: out std_logic;
+ledF2Door: out std_logic;
+ledF0Panel: out std_logic;
+ledF1Panel: out std_logic;
+ledF2Panel: out std_logic;
+ledEmergenciaPanel: out std_logic;
+ledAlarmaPanel: out std_logic;
+ledF0Top: out std_logic;
+ledF1Top: out std_logic;
+ledF2Top: out std_logic;
+ledGoingUpTop: out std_logic;
+ledGoingDwTop: out std_logic;
+ledOverloadPanel: out std_logic;
+
+--Cabina
+cabinInF0: in std_logic;
+cabinInF1: in std_logic;
+cabinInF2: in std_logic;
+cabinNearF0: in std_logic;
+cabinNearF1Dw: in std_logic;
+cabinNearF1Up: in std_logic;
+cabinNearF2: in std_logic;
+
+--Puertas
+doorF0Open: out std_logic;
+doorF1Open: out std_logic;
+doorF2Open: out std_logic;
+doorF0Close: out std_logic;
+doorF1Close: out std_logic;
+doorF2Close: out std_logic;
+doorF0Opened: in std_logic;
+doorF1Opened: in std_logic;
+doorF2Opened: in std_logic;
+--doorF0Closed: in std_logic;
+--doorF1Closed: in std_logic;
+--doorF2Closed: in std_logic;
+
+--Botones
+boton0: in std_logic;
+boton1Dw: in std_logic;
+boton1Up: in std_logic;
+boton2: in std_logic;
+botonF0: in std_logic;
+botonF1: in std_logic;
+botonF2: in std_logic;
+alarma: in std_logic;
+paroEmergencia: in std_logic;
+sobrepeso: in std_logic;
+
+--Sensores de luz
+l_barrier0: in std_logic;
+l_barrier1: in std_logic;
+l_barrier2: in std_logic;
+
+clk: in std_logic;
+reset: in std_logic;
+--paro: in std_logic;
+
+--Motores
+--motores: out std_logic;
+--sensores: out std_logic;
+motorUp: out std_logic;
+motorSlow: out std_logic;
+motorDw: out std_logic
+);
+end test_pisos;
+
+architecture Behavioral of test_pisos is
+signal estado: integer range 0 to 35;
+signal divisor: std_logic_vector (15 downto 0);
+signal pulso: STD_LOGIC;
+signal contador: integer range 0 to 9999999 := 0;
+signal contadorF0: integer range 0 to 249999999 := 0;
+signal contadorF1: integer range 0 to 249999999 := 0;
+signal contadorF2: integer range 0 to 249999999 := 0;
+signal contador_aux_0: std_logic;
+signal contador_aux_1: std_logic;
+signal contador_aux_2: std_logic;
+signal cont_aux_0: std_logic;
+signal cont_aux_1: std_logic;
+signal cont_aux_2: std_logic;
+signal botonF0S: std_logic;
+signal botonF1S: std_logic;
+signal botonF2S: std_logic;
+signal boton0S: std_logic;
+signal boton1DwS: std_logic;
+signal boton1UpS: std_logic;
+signal boton2S: std_logic;
+signal cabinInF0S: std_logic;
+signal cabinInF1S: std_logic;
+signal cabinInF2S: std_logic;
+begin
+
+process (alarma, clk) 
+begin
+if (alarma = '1') then
+	pulso <= '0';
+   contador <= 0;
+elsif rising_edge(clk) then
+	if (contador = 9999999) then
+		pulso <= NOT(pulso);
+      contador <= 0;
+	else
+		contador <= contador+1;
+   end if;
+end if;
+end process;
+
+process (clk, cabinInF0, l_barrier0, sobrepeso) --contador para espera en F0
+begin
+	if cabinInF0='1' and l_barrier0='0' and sobrepeso='1' then
+		if rising_edge(clk) then
+			if (contadorF0 = 249999999) then
+				contador_aux_0 <= '1';
+				contadorF0 <= 0;
+			else
+				contadorF0 <= contadorF0+1;
+			end if;
+		end if;
+	else
+		contadorF0 <= 0;
+		contador_aux_0 <= '0';
+	end if;
+end process;
+
+process (clk, cabinInF1, l_barrier1, sobrepeso) --contador para espera en F1
+begin
+	if cabinInF1='1' and l_barrier1='0' and sobrepeso='1' then
+		if rising_edge(clk) then
+			if (contadorF1 = 249999999) then
+				contador_aux_1 <= '1';
+				contadorF1 <= 0;
+			else
+				contadorF1 <= contadorF1+1;
+			end if;
+		end if;
+	else
+		contadorF1 <= 0;
+		contador_aux_1 <= '0';
+	end if;
+end process;
+
+process (clk, cabinInF2, l_barrier2, sobrepeso) --contador para espera en F2
+begin
+	if cabinInF2='1' and l_barrier2='0' and sobrepeso='1' then
+		if rising_edge(clk) then
+			if (contadorF2 = 249999999) then
+				contador_aux_2 <= '1';
+				contadorF2 <= 0;
+			else
+				contadorF2 <= contadorF2+1;
+			end if;
+		end if;
+	else
+		contadorF2 <= 0;
+		contador_aux_2 <= '0';
+	end if;
+end process;
+
+process(clk)
+begin
+if clk='1' and clk'event then
+	divisor<=divisor+1;
+end if;
+end process;
+
+process(sobrepeso)
+begin
+if sobrepeso='0' then
+	ledOverloadPanel <= '1';
+else
+	ledOverloadPanel <= '0';
+end if;
+end process;
+
+process(clk, reset)
+begin
+if reset='1' then
+	estado <= 9;
+elsif clk='1' and clk'event then
+	if divisor=0 then
+	case estado is
+	when 0 => --quieto en 0
+	if l_barrier0 = '0' and sobrepeso = '1' then
+		if botonF2S = '0' then
+			estado <= 24;
+		elsif botonF1S = '0' then
+			estado <= 26;
+		elsif botonF1 = '0' then
+			estado <= 11;
+		elsif botonF2='0' then
+			estado <= 5;
+		elsif boton2='0' then
+			estado <= 13;
+		elsif boton1Dw = '0' then
+			estado <= 2;
+		elsif boton1Up = '0' or boton1UpS='0' then
+			estado <= 27;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 0;
+		end if;
+	end if;
+	when 1 => --subiendo a 1 para subir
+		if cabinNearF1Dw = '1' then
+			estado <= 18;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 1;
+		end if;
+	when 2 => --subiendo a 1 para bajar
+		if cabinNearF1Dw = '1' then
+			estado <= 17;
+		elsif paroEmergencia = '0' then
+			estado <= 15;	
+		else
+			estado <= 2;
+		end if;
+	when 3 => --quieto en 1 para bajar
+		if l_barrier1 = '0' and sobrepeso = '1' then
+		if botonF0='0' then
+			estado<= 9;
+		elsif boton0='0' then
+			estado <= 14;
+		elsif botonF0S='0' then
+			estado<=31;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 3;
+		end if;
+		end if;
+	when 4 => --quieto en 1 para subir
+		if l_barrier1='0' and sobrepeso = '1' then
+		if botonF2='0' then
+			estado<= 5;
+		elsif boton2='0' then
+			estado<= 13;
+		elsif boton2S='0' then
+			estado<=29;
+		elsif botonF2S='0' then
+			estado<=29;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 4;
+		end if;
+		end if;
+	when 5 => --subiendo a 2 (panel)
+		if cabinNearF2 = '1' then
+			estado<= 21;
+		elsif botonF1S='0' and cabinInF0S='1' then
+			estado<= 11;
+		elsif boton1UpS='0' and cabinInF0S='1' then
+			estado<= 1;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 5;
+		end if;
+	when 13 => --subiendo a 2 (planta)
+		if cabinNearF2 = '1' then
+			estado <= 21;
+		elsif botonF1S='0' and cabinInF0S='1' then
+			estado <= 1;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 13;
+		end if;
+	when 6 => --quieto en 2
+		if l_barrier2 = '0' and sobrepeso = '1' then
+		if botonF1S = '0' then
+			estado <= 32;
+		elsif botonF0S = '0' then
+			estado <= 34;
+		elsif botonF0='0' then
+			estado<= 9;
+		elsif boton0='0' then
+			estado <= 14;
+		elsif botonF1='0' then
+			estado<= 12;
+		elsif boton1Dw = '0' then
+			estado <= 7;
+		elsif boton1Up = '0' then
+			estado <= 8;
+		elsif boton1DwS='0' then
+			estado<=32;
+		elsif boton0S='0' then
+			estado<=34;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 6;
+		end if;
+		end if;
+	when 7 => --bajando a 1 para bajar
+		if cabinNearF1Up = '1' then
+			estado <= 20;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 7;
+		end if;
+	when 8 => --bajando a 1 para subir
+		if cabinNearF1Up = '1' then
+			estado <= 19;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 8;
+		end if;
+	when 9 => --bajando a 0 (panel)
+		if cabinNearF0 = '1' then  
+			estado<= 22;
+		elsif botonF1S='0' and cabinInF2S='1' then
+			estado <= 12;
+		elsif boton1DwS='0' and cabinInF2S='1' then
+			estado<=7;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 9;
+		end if;
+	when 14 => --bajando a 0 (planta)
+		if cabinNearF0 = '1' then  
+			estado<= 22;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 14;
+		end if;
+	when 10 => --quieto en 1
+		if l_barrier1='0' and sobrepeso = '1' then
+		if botonF2S='0' then
+			estado <= 28;
+		elsif botonF0S='0' then
+			estado <= 30;
+		elsif botonF0 = '0' then
+			estado <= 9;
+		elsif boton0='0' then
+			estado <= 14;
+		elsif botonF2 = '0' then
+			estado <= 5;
+		elsif boton2='0' then
+			estado <= 13;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 10;
+		end if;
+		end if;
+	when 11 => --subiendo a 1 (panel)
+		if cabinNearF1Dw = '1' then
+			estado <= 16;
+--		if cabinInF1 = '1' then
+--			estado <= 10;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 11;
+		end if;
+	when 12 => --bajando a 1 (panel)
+		if cabinNearF1Up = '1' then
+			estado <= 23;
+		elsif paroEmergencia = '0' then
+			estado <= 15;
+		else
+			estado <= 12;
+		end if;
+	when 15 => --paro de emergencia
+		estado <= 15;
+	when 16 => --subiendo a 1 lento
+		if cabinInF1 = '1' then
+			estado <= 10;
+		end if;
+	when 23 => --bajando a 1 lento
+		if cabinInF1 = '1' then
+			estado <= 10;
+		end if;
+	when 17 => --subiendo a 1 para bajar lento
+		if cabinInF1 = '1' then
+			estado <= 3;
+		end if;
+	when 18 => --subiendo a 1 para subir lento
+		if cabinInF1 = '1' then
+			estado <= 4;
+		end if;
+	when 19 => --bajando a 1 para subir lento
+		if cabinInF1 = '1' then
+			estado <= 4;
+		end if;
+	when 20 => --bajando a 1 para bajar lento
+		if cabinInF1 = '1' then
+			estado <= 3;
+		end if;
+	when 21 => --subiendo a 2 lento
+		if cabinInF2 = '1' then
+			estado <= 6;
+		end if;
+	when 22 => --bajando a 0 lento
+		if cabinInF0 = '1' then
+			estado <= 0;
+		end if;
+	when 24 => --quieto en 0 para subir a 2
+		if cabinInF0 = '1' then
+			estado <= 25;
+		else
+			estado <= 24;
+		end if;
+	when 25 => --espera en 0 para subir a 2
+		if (cont_aux_0='1') then
+			estado <= 5;
+		else
+			estado <= 25;
+		end if;
+	when 26 => --quieto en 0 para subir a 1
+		if cabinInF0 = '1' then
+			estado <= 27;
+		else
+			estado <= 26;
+		end if;
+	when 27 => --espera en 0 para subir a 1
+		if (cont_aux_0='1') then
+			if botonF1S='0' then
+				estado <= 11;
+			elsif boton1UpS='0' then
+				estado<=1;
+			end if;
+		else
+			estado <= 27;
+		end if;
+	when 28 => --quieto en 1 para subir a 2
+		if cabinInF1 = '1' then
+			estado <= 29;
+		else
+			estado <= 28;
+		end if;
+	when 29 => --espera en 1 para subir a 2
+		if (cont_aux_1='1') then
+			if botonF2S='0' then
+				estado <= 5;
+			elsif boton2S='0' then
+				estado <= 13;
+			end if;
+		else
+			estado <= 29;
+		end if;
+	when 30 => --quieto en 1 para bajar a 0
+		if cabinInF1 = '1' then
+			estado <= 31;
+		else
+			estado <= 30;
+		end if;
+	when 31 => --espera en 1 para bajar a 0
+		if (cont_aux_1='1') then
+			estado <= 9;
+		else
+			estado <= 31;
+		end if;
+	when 32 => --quieto en 2 para bajar a 1
+		if cabinInF2 = '1' then
+			estado <= 33;
+		else
+			estado <= 32;
+		end if;
+	when 33 => --espera en 2 para bajar a 1
+		if (cont_aux_2='1') then
+			if botonF1S='0' then
+				estado <= 12;
+			elsif boton1DwS='0' then
+				estado<=7;
+			end if;
+		else
+			estado <= 33;
+		end if;
+	when 34 => --quieto en 2 para bajar a 0
+		if cabinInF2 = '1' then
+			estado <= 35;
+		else
+			estado <= 34;
+		end if;
+	when 35 => --espera en 2 para bajar a 0
+		if (cont_aux_2='1') then
+			if botonF0S='0' then
+				estado <= 9;
+			elsif boton0S='0' then
+				estado<=14;
+			end if;
+		else
+			estado <= 35;
+		end if;
+	when others =>
+		if cabinInF0 = '1' then
+			estado <= 0;
+		elsif cabinInF1 = '1' then
+			estado <= 10;
+		elsif cabinInF2 = '1' then
+			estado <= 6;
+		else
+			estado <= 9;
+		end if;
+	end case;
+	end if;
+end if;
+end process;
+
+process(estado, botonF0S, botonF1S, botonF2S)
+begin
+	case estado is
+		when 0 => --parar en 0
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '1';
+				doorF0Close <= '0';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '1';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 1 => --subir a 1 para subir
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '1';
+				if boton2S='0' then
+				ledF2Door <= '1';
+				else
+				ledF2Door <= '0';
+				end if;
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				if botonF2S='0' then
+					ledF2Panel<='1';
+				else
+					ledF2Panel<='0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 2 => --subir a 1 para bajar
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '1';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 3 => --quieto en 1 para bajar
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 4 => --quieto en 1 para subir
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				if boton2S='0' then
+					ledF2Door <= '1';
+				else
+					ledF2Door <= '0';
+				end if;
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel <= '0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 5 => --subir a 2 (panel)
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				if boton1DwS='0' then
+					ledF1DoorDw <= '1';
+				else
+					ledF1DoorDw <= '0';
+				end if;
+				ledF1DoorUp <= '0';
+				if boton2S='0' then
+					ledF2Door <= '1';
+				else
+					ledF2Door <= '0';
+				end if;
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel<='0';
+				end if;
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else
+					ledF1Panel <= '0';
+				end if;
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 6 => --quieto en 2
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '1';
+				doorF2Close <= '0';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '1';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				if boton1DwS='0' then
+					ledF1DoorDw <= '1';
+				else
+					ledF1DoorDw <= '0';
+				end if;
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 7 => --bajar a 1 para bajar
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '1';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 8 => --bajar a 1 para subir
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '1';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 9 => --bajar a 0 (panel)
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '1';
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else
+					ledF1Panel <= '0';
+				end if;
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel<='0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 10 => --parar en 1
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 11 => --subir a 1
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				ledF1Panel <= '1';
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel <= '0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 12 => --bajar a 1
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				ledF1Panel <= '1';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 13 => --subir a 2 (planta)
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '1';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 14 => --bajar a 0 (planta)
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '1';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 15 => --parada de emergencia
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp<='0';
+				motorDw<='0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '1';
+		when 16 => --subir a 1 lento
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				ledF1Panel <= '1';
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel <= '0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 17 => --subir a 1 lento para bajar
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '1';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 18 => --subir a 1 lento para subir
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '1';
+				if boton2S='0' then
+					ledF2Door <= '1';
+				else
+					ledF2Door <= '0';
+				end if;
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel <= '0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 19 => --bajar a 1 lento para subir
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '1';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 20 => --bajar a 1 lento para bajar
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '1';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 21 => --subir a 2 lento
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '1';
+				motorDw <= '0';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '1';
+				ledF0Door <= '0';
+				if boton1DwS='0' then
+					ledF1DoorDw <= '1';
+				else
+					ledF1DoorDw <= '0';
+				end if;
+				ledF1DoorUp <= '0';
+				if boton2S='0' then
+					ledF2Door <= '1';
+				else
+					ledF2Door <= '0';
+				end if;
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else
+					ledF1Panel <= '0';
+				end if;
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 22 => --bajar a 0 lento
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				if boton0='0' or boton0S='0' then
+					ledF0Door <= '1';
+				else
+					ledF0Door <= '0';
+				end if;
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				if botonF0='0' or botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else 
+					ledF1Panel <= '0';
+				end if;
+				if botonF2S='0' then
+					ledF2Panel <= '1';
+				else
+					ledF2Panel <= '0';
+				end if;
+				ledEmergenciaPanel <= '0';
+		when 23 => --bajar a 1 lento
+--				motores <= '1';
+--				sensores <= '0';
+				motorUp <= '0';
+				motorDw <= '1';
+				motorSlow <= '1';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '1';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				if botonF0S='0' then
+					ledF0Panel <= '1';
+				else
+					ledF0Panel <= '0';
+				end if;
+				ledF1Panel <= '1';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 24 => --parar en 0 para subir a 2
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '1';
+				doorF0Close <= '0';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '1';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 25 => --espera en 0 para subir a 2
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '1';
+				doorF0Close <= '0';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '1';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 26 => --parar en 0 para subir a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '1';
+				doorF0Close <= '0';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '1';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '1';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 27 => --espera en 0 para subir a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '1';
+				doorF0Close <= '0';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '1';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '1';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 28 => --parar en 1 para subir a 2
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 29 => --espera en 1 para subir a 2
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				if boton2S='0' then
+					ledF2Door <= '1';
+				else
+					ledF2Door <= '0';
+				end if;
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '1';
+				ledEmergenciaPanel <= '0';
+		when 30 => --parar en 1 para bajar a 0
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '1';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 31 => --espera en 1 para bajar a 0
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '1';
+				doorF1Close <= '0';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '1';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '1';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 32 => --parar en 2 para bajar a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '1';
+				doorF2Close <= '0';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '1';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				if boton1DwS='0' then
+					ledF1DoorDw <= '1';
+				else
+					ledF1DoorDw <= '0';
+				end if;
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else
+					ledF1Panel <= '0';
+				end if;
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 33 => --espera en 2 para bajar a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '1';
+				doorF2Close <= '0';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '1';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				if boton1DwS='0' then
+					ledF1DoorDw <= '1';
+				else
+					ledF1DoorDw <= '0';
+				end if;
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				if botonF1S='0' then
+					ledF1Panel <= '1';
+				else
+					ledF1Panel <= '0';
+				end if;
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 34 => --parar en 2 para bajar a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '1';
+				doorF2Close <= '0';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '1';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '1';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when 35 => --espera en 2 para bajar a 1
+				motorUp <= '0';
+				motorDw <= '0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '1';
+				doorF2Close <= '0';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '1';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '1';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+		when others =>
+--				motores <= '0';
+--				sensores <= '0';
+				motorUp<='0';
+				motorDw<='0';
+				motorSlow <= '0';
+				doorF0Open <= '0';
+				doorF0Close <= '1';
+				doorF1Open <= '0';
+				doorF1Close <= '1';
+				doorF2Open <= '0';
+				doorF2Close <= '1';
+				ledF0Top <= '0';
+				ledF1Top <= '0';
+				ledF2Top <= '0';
+				ledGoingDwTop <= '0';
+				ledGoingUpTop <= '0';
+				ledF0Door <= '0';
+				ledF1DoorDw <= '0';
+				ledF1DoorUp <= '0';
+				ledF2Door <= '0';
+				ledF0Panel <= '0';
+				ledF1Panel <= '0';
+				ledF2Panel <= '0';
+				ledEmergenciaPanel <= '0';
+	end case;
+end process;
+
+memoria_botones_panel:
+PROCESS(clk, cabinInF0, doorF0Opened, cabinInF1, doorF1Opened, cabinInF2, doorF2Opened)-- Captura la pulsación del botón
+BEGIN
+   IF clk='1' AND clk'event THEN
+		if divisor=0 then
+      IF (botonF0='0') THEN 
+			botonF0S <= botonF0;
+		elsif (botonF1='0') then
+			botonF1S <= botonF1;
+		elsif (botonF2='0') then
+			botonF2S <= botonF2;
+		elsif cabinInF2 = '1' and doorF2Opened = '1' THEN
+			botonF2S<='1';
+		elsif cabinInF1 = '1' and doorF1Opened = '1' then
+			botonF1S<='1';
+		elsif cabinInF0 = '1' and doorF0Opened = '1' then
+			botonF0S<='1';
+      END IF;
+	  end if;
+   END IF;
+END PROCESS memoria_botones_panel;
+
+memoria_botones_planta:
+PROCESS(clk, cabinInF0, doorF0Opened, cabinInF1, doorF1Opened, cabinInF2, doorF2Opened)-- Captura la pulsación del botón
+BEGIN
+   IF clk='1' AND clk'event THEN
+		if divisor=0 then
+      IF (boton0='0') THEN 
+			boton0S <= boton0;
+		elsif (boton1Dw='0') then
+			boton1DwS <= boton1Dw;
+		elsif (boton1Up='0') then
+			boton1UpS <= boton1Up;
+		elsif (boton2='0') then
+			boton2S <= boton2;
+		elsif cabinInF2 = '1' and doorF2Opened = '1' THEN
+			boton2S<='1';
+		elsif cabinInF1 = '1' and doorF1Opened = '1' then
+			boton1UpS<='1';
+			boton1DwS<='1';
+		elsif cabinInF0 = '1' and doorF0Opened = '1' then
+			boton0S<='1';
+      END IF;
+	  end if;
+   END IF;
+END PROCESS memoria_botones_planta;
+
+memoria_cabina:
+PROCESS(clk, cabinInF0, doorF0Opened, cabinInF1, doorF1Opened, cabinInF2, doorF2Opened)
+BEGIN
+   IF clk='1' AND clk'event THEN
+		if divisor=0 then
+      IF (cabinInF0='1' and doorF0Opened='1') THEN 
+			cabinInF0S <= cabinInF0;
+			cabinInF1S <= '0';
+			cabinInF2S <= '0';
+		elsif (cabinInF1='1' and doorF1Opened='1') then
+			cabinInF1S <= cabinInF1;
+			cabinInF0S <= '0';
+			cabinInF2S <= '0';
+		elsif (cabinInF2='1' and doorF2Opened='1') then
+			cabinInF2S <= cabinInF2;
+			cabinInF0S <= '0';
+			cabinInF1S <= '0';
+      END IF;
+	  end if;
+   END IF;
+END PROCESS memoria_cabina;
+
+cont_aux_0 <=contador_aux_0;
+cont_aux_1 <=contador_aux_1;
+cont_aux_2 <=contador_aux_2;
+ledAlarmaPanel <= pulso;
+end Behavioral;
