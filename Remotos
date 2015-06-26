@@ -1,0 +1,11 @@
+#Botones remotos
+NET "boton0" LOC="N7";
+NET "boton1Dw" LOC="T8";
+NET "boton1Up" LOC="R6";
+NET "boton2" LOC="T5";
+NET "sobrepeso" LOC="R5";
+NET "botonF0" LOC= "C2";
+NET "botonF1" LOC= "C1";
+NET "botonF2" LOC= "B1";
+NET "alarma" LOC= "N8";
+NET "paroEmergencia" LOC= "L5";
