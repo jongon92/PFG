@@ -1,0 +1,11 @@
+#Botones de llamada
+NET "led0" LOC="D8" ; 
+NET "led1arriba" LOC="D10" ;
+NET "led1abajo" LOC="C9" ;
+NET "led2" LOC="A3" ;
+
+#entradas
+NET "sw0" LOC ="F12";
+NET "sw1" LOC ="G12";
+NET "sw2" LOC ="H14";
+NET "sw3" LOC ="H13";
