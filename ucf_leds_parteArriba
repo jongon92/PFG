@@ -1,0 +1,13 @@
+#LEDs de la parte de arriba
+NET "led_arriba" LOC="B6" ; 
+NET "led_abajo" LOC="A5" ;
+NET "led_PB" LOC="B4" ;
+NET "led_1P" LOC="A4" ;
+NET "led_2P" LOC="B5" ;
+
+#entradas
+NET "sw0" LOC ="F12";
+NET "sw1" LOC ="G12";
+NET "sw2" LOC ="H14";
+NET "sw3" LOC ="H13";
+NET "sw4" LOC ="J14";
