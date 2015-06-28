@@ -1,0 +1,6 @@
+#Movimiento cabina
+NET "ascensor_arriba" LOC="E6" ; 
+NET "ascensor_abajo" LOC="D5" ;
+
+#entradas
+NET "sw0" LOC ="F12";
