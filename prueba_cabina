@@ -1,0 +1,33 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.std_logic_unsigned.all;
+
+entity ascensor is
+Port(
+
+--salidas
+ascensor_abajo: out std_logic;
+ascensor_arriba: out std_logic;
+
+--entradas
+sw0: in std_logic
+);
+end ascensor;
+
+architecture Behavioral of ascensor is
+
+begin
+
+process(sw0)
+begin
+if sw0='1'then
+	ascensor_abajo<='1';
+	ascensor_arriba<='0';
+else
+	ascensor_abajo<='0';
+	ascensor_arriba<='1';
+end if;
+end process;
+
+end Behavioral;
