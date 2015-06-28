@@ -1,0 +1,74 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.std_logic_unsigned.all;
+
+entity luces_arriba_ascensor is
+Port(
+
+--salidas
+led_abajo: out std_logic;
+led_arriba: out std_logic;
+led_PB: out std_logic;
+led_1P: out std_logic;
+led_2P: out std_logic;
+
+--entradas
+sw0: in std_logic;
+sw1: in std_logic;
+sw2: in std_logic;
+sw3: in std_logic;
+sw4: in std_logic
+);
+end luces_arriba_ascensor;
+
+architecture Behavioral of luces_arriba_ascensor is
+
+begin
+
+process(sw0)
+begin
+if sw0='1'then
+	led_abajo<='1';
+else
+	led_abajo<='0';
+end if;
+end process;
+
+process(sw1)
+begin
+if sw1='1'then
+	led_PB<='1';
+else
+	led_PB<='0';
+end if;
+end process;
+
+process(sw2)
+begin
+if sw2='1'then
+	led_1P<='1';
+else
+	led_1P<='0';
+end if;
+end process;
+
+process(sw3)
+begin
+if sw3='1'then
+	led_2P<='1';
+else
+	led_2P<='0';
+end if;
+end process;
+
+process(sw4)
+begin
+if sw4='1'then
+	led_arriba<='1';
+else
+	led_arriba<='0';
+end if;
+end process;
+
+end Behavioral;
